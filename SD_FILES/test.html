@@ -1,0 +1,79 @@
+<!DOCTYPE HTML><html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voyager 3 Monitoring Station</title>
+    <style>
+        body {
+            font-family: Arial;
+            margin: 0px auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 { font-size: 3.0rem; }
+        h3 { font-size: 2.0rem; }
+        td { font-size: 1.0rem; }
+    </style>
+</head>
+<body>
+  <h2>Voyager 3 Monitoring System</h2>
+  <h3>Stats</h3>
+  <table class="stats">
+    <tbody>
+        <tr>
+            <td id="pressure">Pressure: Loading...</td>
+            <td id="temp">Temperature: Loading...</td>
+        </tr>
+        <tr>
+            <td id="altitude">Altitude: Loading...</td>
+        </tr>
+    </tbody>
+  </table>
+
+  <button id="settings-button">
+    Change Settings
+  </button>
+
+  <div id="settings" style="display: none;">
+    <label for="pressure-input">Local Sea Level Pressure</label>
+    <input type="text" id="pressure-input">
+  </div>
+  
+
+  <p>
+    <span class="dht-labels">Humidity</span>
+    <sup class="units">%</sup>
+  </p>
+</body>
+<script>
+    settingsSection = document.getElementById("settings")
+    pressureText = document.getElementById("pressure")
+    tempText = document.getElementById("temp")
+    altitudeText = document.getElementById("altitude")
+    document.getElementById("settings-button").onclick = () => {
+        if (settingsSection.style.display == "none") {
+            settingsSection.style.display = "inline"
+        } else {
+            settingsSection.style.display = "none"
+        }
+    }
+
+    setInterval(function ( ) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+            console.log(this.responseText)
+            let data = JSON.parse(this.responseText).data
+                pressureText.innerHTML = `Pressure: ${data[0]}`;
+                tempText.innerHTML = `Temperature: ${data[1]}`;
+                altitudeText.innerHTML = `Altitude: ${data[2]}`;
+            }
+        };
+        xhttp.open("GET", "/data", true);
+        xhttp.send();
+    }, 3000 ) ;
+
+</script>
+</html>

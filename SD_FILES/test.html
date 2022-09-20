@@ -15,6 +15,18 @@
         h2 { font-size: 3.0rem; }
         h3 { font-size: 2.0rem; }
         td { font-size: 1.0rem; }
+        button {
+            height: 60px;
+            width: 120px;
+            margin-bottom: 10px;
+        }
+        #settings {
+            flex-direction: column;
+            align-items: center;
+        }
+        input {
+            margin: 10px;
+        }
     </style>
 </head>
 <body>
@@ -32,48 +44,104 @@
     </tbody>
   </table>
 
+  <button id="mode-button">
+    Connecting
+  </button>
+
+
   <button id="settings-button">
     Change Settings
   </button>
 
-  <div id="settings" style="display: none;">
-    <label for="pressure-input">Local Sea Level Pressure</label>
-    <input type="text" id="pressure-input">
+  <div id="settings" style="display: none">
+    <label for="pressure-input">Local Sea Level Pressure (100Pa):</label>
+    <input type="number" id="pressure-input">
+    <button id="settings-submit">Send</button>
   </div>
   
 
-  <p>
-    <span class="dht-labels">Humidity</span>
-    <sup class="units">%</sup>
-  </p>
 </body>
 <script>
+    mode = -1
+
     settingsSection = document.getElementById("settings")
     pressureText = document.getElementById("pressure")
     tempText = document.getElementById("temp")
     altitudeText = document.getElementById("altitude")
     document.getElementById("settings-button").onclick = () => {
         if (settingsSection.style.display == "none") {
-            settingsSection.style.display = "inline"
+            settingsSection.style.display = "flex"
         } else {
             settingsSection.style.display = "none"
         }
     }
-
-    setInterval(function ( ) {
+    
+    document.getElementById("settings-submit").onclick = () => {
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
             if (this.readyState == 4 && this.status == 200) {
-            console.log(this.responseText)
-            let data = JSON.parse(this.responseText).data
-                pressureText.innerHTML = `Pressure: ${data[0]}`;
-                tempText.innerHTML = `Temperature: ${data[1]}`;
-                altitudeText.innerHTML = `Altitude: ${data[2]}`;
+                console.log("good")
             }
+        };
+        xhttp.open("POST", "/settings", true);
+        xhttp.setRequestHeader("seaLevelPressure", document.getElementById("pressure-input").value)
+        xhttp.send();
+    }
+
+ 
+    document.getElementById("mode-button").onclick = () => {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                console.log("mode-changed")
+                if (mode == 0) {
+                    mode = 1;
+                    document.getElementById("mode-button").innerHTML = "stop"
+                } else if (mode == 1) {
+                    mode = 0;
+                    document.getElementById("mode-button").innerHTML = "start"
+                }
+            }
+        };
+
+        console.log("changing mode")
+
+        xhttp.open("POST", "/mode", true);
+        if (mode == 0) {
+            xhttp.setRequestHeader("mode", "record")
+            xhttp.send();
+        } else if (mode == 1) {
+            xhttp.setRequestHeader("mode", "standby")
+            xhttp.send();
+        }
+    }
+
+    setInterval(function ( ) {
+        if (mode == 1) {
+            return
+        } 
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                console.log(this.responseText)
+                let data = JSON.parse(this.responseText).data
+                pressureText.innerHTML = `Pressure: ${data[1]}`;
+                tempText.innerHTML = `Temperature: ${parseInt(data[0]) / 100}`;
+                altitudeText.innerHTML = `Altitude: ${data[2]}`;
+                if (mode == -1) {
+                    mode = 0
+                    document.getElementById("mode-button").innerHTML = "Start"
+                }
+            }
+
         };
         xhttp.open("GET", "/data", true);
         xhttp.send();
     }, 3000 ) ;
+
+    setTimeout(() => {
+
+    }, 5000)
 
 </script>
 </html>

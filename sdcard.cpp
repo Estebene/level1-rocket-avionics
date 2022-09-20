@@ -13,8 +13,8 @@ File myFile;
 
 const uint8_t chipSelect = SS;
 
-static float getCurrentHeight(float pressure, float temp) {
-  float pressureCalc = pow((1029 * 100)/(pressure), 0.190223) - 1;
+static float getCurrentHeight(float pressure, float temp, int groundPressure) {
+  float pressureCalc = pow((groundPressure * 100)/(pressure), 0.190223) - 1;
   float tempCalc = temp + 273.15;
   return (pressureCalc * tempCalc)/0.0065;
 }
@@ -53,21 +53,23 @@ String sdInit(void) {
   return "";
 }
 
-String sdLogs(char* filename, long logTime) {
+String sdLogs(char* filename, long logTime, int groundPressure) {
   myFile = SD.open(filename, FILE_WRITE);
-//  if (myFile) {
-//    data = getBmpData();
-//    myFile.print(logTime);
-//    myFile.print(",");
-//    for (uint8_t i = 0; i < 3; i++) {
-//      myFile.print(data[i]);
-//      myFile.print(",");
-//    }
-//    myFile.println();
-//    myFile.close();
-//  } else {
-//    return "file opening error";
-//  }
+  if (myFile) {
+    BmpResult_t data = getBmpData(groundPressure);
+    myFile.print(logTime);
+    myFile.print(",");
+    myFile.print(data.temp);
+    myFile.print(",");
+    myFile.print(data.pressure);
+    myFile.print(",");
+    myFile.print(data.altitude);
+    myFile.print(",");
+    myFile.println();
+    myFile.close();
+  } else {
+    return "file opening error";
+  }
   return "";
 }
 
@@ -82,13 +84,13 @@ String sdHeaders(char* filename) {
   return "";
 }
 
-BmpResult_t getBmpData() {
+BmpResult_t getBmpData(int groundPressure) {
   BmpResult_t data;
   Serial.println(bmp.readTemperature());
   Serial.println(float(bmp.readTemperature()));
   data.temp = float(bmp.readTemperature());
   Serial.println(data.temp);
   data.pressure = float(bmp.readPressure());
-  data.altitude = float(getCurrentHeight(data.pressure, data.temp));
+  data.altitude = float(getCurrentHeight(data.pressure, data.temp, groundPressure));
   return data;
 }

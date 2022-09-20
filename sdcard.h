@@ -12,9 +12,9 @@ typedef struct {
 void getHTML(char* html, char* filename);
 String bmpInit(void);
 String sdInit(void);
-String sdLog(char* filename, long logTime);
+String sdLogs(char* filename, long logTime, int groundPressure);
 String sdHeaders(char* filename);
-BmpResult_t getBmpData();
+BmpResult_t getBmpData(int groundPressure);
 
 
 #endif
